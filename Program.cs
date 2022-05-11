@@ -4,6 +4,11 @@ using VSSystem.Collections.Generic.Extensions;
 using VSSystem.IO;
 using VSSystem.IO.SourceCode;
 using VSSystem.Extensions;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.IO;
+using System;
+using System.Linq;
 
 class MainClass
 {
@@ -37,7 +42,6 @@ class MainClass
                         }
                     }
                     catch { }
-
                 }
             }
             Dictionary<string, string> mArgs = CommandLine.GetCommandLineArgs(new string[]
@@ -56,6 +60,13 @@ class MainClass
             else if ((mArgs?.ContainsKey("-p") ?? false) || (mArgs?.ContainsKey("publish") ?? false))
             {
                 _Publish(mArgs);
+            }
+            else if ((mArgs?.ContainsKey("-c") ?? false) || (mArgs?.ContainsKey("check") ?? false))
+            {
+                _CheckParams(mArgs);
+                Console.WriteLine();
+                Console.WriteLine("Press any key to quit...");
+                Console.ReadKey();
             }
             else
             {
@@ -145,6 +156,7 @@ class MainClass
     {
         try
         {
+            _LoadProjects();
             string projectName = string.Empty;
             if ((mArgs?.ContainsKey("-n") ?? false))
             {
@@ -160,6 +172,7 @@ class MainClass
             {
                 if (pjObj.OutputType?.Equals("exe", StringComparison.InvariantCultureIgnoreCase) ?? false)
                 {
+                    var pjOriginalObj = new ProjectFileInfo(pjObj.ProjectFilePath);
                     string version = pjObj.FileVersion;
                     if ((mArgs?.ContainsKey("-v") ?? false))
                     {
@@ -174,18 +187,20 @@ class MainClass
                     if (version.Equals("next", StringComparison.InvariantCultureIgnoreCase))
                     {
                         version = _GetNextVersion(pjObj.FileVersion);
+                    }
 
-                        if (!version.Equals(pjObj.FileVersion, StringComparison.InvariantCultureIgnoreCase))
+                    if (!version.Equals(pjObj.FileVersion, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        try
                         {
-                            try
-                            {
-                                pjObj.Version = version;
-                                pjObj.FileVersion = version;
-                                hasChange = true;
-                            }
-                            catch { }
-
+                            pjObj.Version = version;
+                            pjObj.FileVersion = version;
+                            pjOriginalObj.Version = version;
+                            pjOriginalObj.FileVersion = version;
+                            hasChange = true;
                         }
+                        catch { }
+
                     }
 
                     string description = pjObj.Description;
@@ -203,6 +218,7 @@ class MainClass
                         try
                         {
                             pjObj.Description = description;
+                            pjOriginalObj.Description = description;
                             hasChange = true;
                         }
                         catch { }
@@ -210,7 +226,9 @@ class MainClass
                     }
                     if (hasChange)
                     {
+
                         pjObj.Save();
+                        pjOriginalObj.Save();
                         _UpdateSources();
                     }
 
@@ -308,5 +326,53 @@ class MainClass
         catch { }
         return result;
 
+    }
+
+    static void _LoadProjects()
+    {
+        try
+        {
+            _projectObjs = new Dictionary<string, ProjectFileExtInfo>(StringComparer.InvariantCultureIgnoreCase);
+            if (_sourceCodeFile.Exists)
+            {
+                try
+                {
+                    string pjJson = File.ReadAllText(_sourceCodeFile.FullName, Encoding.UTF8);
+                    var tPJObjs = JsonConvert.DeserializeObject<Dictionary<string, ProjectFileExtInfo>>(pjJson);
+                    if (tPJObjs.Count > 0)
+                    {
+                        foreach (var pjObj in tPJObjs)
+                        {
+                            _projectObjs[pjObj.Key] = pjObj.Value;
+                        }
+                    }
+                }
+                catch { }
+            }
+        }
+        catch { }
+    }
+
+    static void _CheckParams(Dictionary<string, string> mArgs)
+    {
+        try
+        {
+            foreach (var arg in mArgs)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.Write(arg.Key);
+                if (!string.IsNullOrWhiteSpace(arg.Value))
+                {
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.Write(": " + arg.Value);
+                }
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine();
+            }
+
+
+
+        }
+        catch { }
     }
 }

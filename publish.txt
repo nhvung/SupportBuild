@@ -1,3 +1,4 @@
-dotnet publish "/home/eiq/Desktop/SourceCodeGit/VSSources/NETCore/Consoles/SupportBuild/SupportBuild.csproj" -c Release -f net6.0 -r linux-x64 -v q -p:PublishSingleFile=true -p:SelfContained=true -p:PublishTrimmed=true
+dotnet publish "SupportBuild.csproj" -c Release -f net6.0 -r linux-x64 -v q -p:PublishSingleFile=true -p:SelfContained=true -p:PublishTrimmed=true
 
-./SupportBuild add -pf "/home/eiq/Desktop/SourceCodeGit/BSSources/NETCore/Libraries/BSSystem.Service.BSCaptureService/BSSystem.Service.BSCaptureService.csproj" -o "/home/eiq/Desktop/SourceCodeGit/Publish/BSCaptureService"
+
+dotnet publish "SupportBuild.csproj" -c Release -f net6.0 -r win-x64 -v q -p:PublishSingleFile=true -p:SelfContained=true -p:PublishTrimmed=true
